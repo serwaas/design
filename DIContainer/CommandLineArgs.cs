@@ -3,7 +3,12 @@ using System.Linq;
 
 namespace DIContainer
 {
-    public class CommandLineArgs
+    public interface ICommandLineArgs
+    {
+        int GetInt(int index, int defaultValue = 0);
+        string Command { get; }
+    }
+    public class CommandLineArgs : ICommandLineArgs
     {
         private readonly string[] args;
 

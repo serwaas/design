@@ -1,23 +1,26 @@
 ﻿using System;
+using System.IO;
 using System.Threading;
 
 namespace DIContainer.Commands
 {
-    public class TimerCommand : BaseCommand
+    public class TimerCommand : BaseCommand 
     {
-        private readonly CommandLineArgs arguments;
+        private readonly ICommandLineArgs _arguments;
+        private readonly TextWriter _textWriter;
 
-        public TimerCommand(CommandLineArgs arguments)
+        public TimerCommand(ICommandLineArgs arguments, TextWriter textWriter )
         {
-            this.arguments = arguments;
+            _arguments = arguments;
+            _textWriter = textWriter;
         }
 
         public override void Execute()
         {
-            var timeout = TimeSpan.FromMilliseconds(arguments.GetInt(0));
-            Console.WriteLine("Waiting for " + timeout);
+            var timeout = TimeSpan.FromMilliseconds(_arguments.GetInt(0));
+            _textWriter.WriteLine("Waiting for " + timeout);
             Thread.Sleep(timeout);
-            Console.WriteLine("Done!");
+            _textWriter.WriteLine("Done!");
         }
     }
 }

@@ -1,40 +1,67 @@
 ﻿using System;
+using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using DIContainer.Commands;
+using Ninject;
+
 
 namespace DIContainer
 {
-    public class Program
+    public interface IProgram
     {
-        private readonly CommandLineArgs arguments;
-        private readonly ICommand[] commands;
+        void Run();
+        string[] GetCommandNames();
+    }
 
-        public Program(CommandLineArgs arguments, params ICommand[] commands)
+    public class Program : IProgram
+    {
+        private readonly ICommandLineArgs _arguments;
+        private readonly ICommand[] _commands;
+        private readonly TextWriter _textWriter;
+
+
+        public Program(ICommandLineArgs arguments, TextWriter textWriter, params ICommand[] commands)
         {
-            this.arguments = arguments;
-            this.commands = commands;
-        
+            _arguments = arguments;
+            _commands = commands;
+            _textWriter = textWriter;
+
+        }
+
+        public string[] GetCommandNames()
+        {
+            return _commands.Select(command => command.Name).ToArray();
         }
 
         static void Main(string[] args)
         {
-            var arguments = new CommandLineArgs(args);
-            var printTime = new PrintTimeCommand();
-            var timer = new TimerCommand(arguments);
-            var commands = new ICommand[] { printTime, timer };
-            new Program(arguments, commands).Run();
+            var container = new StandardKernel();
+            container.Bind<ICommand>().To<TimerCommand>();
+            container.Bind<ICommand>().To<PrintTimeCommand>();
+            container.Bind<ICommand>().To<HelpCommand>();
+
+            container.Bind<IProgram>().To<Program>()
+                                      .InSingletonScope();
+            
+            container.Bind<TextWriter>().ToConstant(Console.Out);
+
+            container.Bind<ICommandLineArgs>().To<CommandLineArgs>()
+                                              .WithConstructorArgument(typeof(string[]), args);
+            
+            container.Get<IProgram>().Run();
         }
 
         public void Run()
         {
-            if (arguments.Command == null)
+            if (_arguments.Command == null)
             {
-                Console.WriteLine("Please specify <command> as the first command line argument");
+                _textWriter.WriteLine("Please specify <command> as the first command line argument");
                 return;
             }
-            var command = commands.FirstOrDefault(c => c.Name.Equals(arguments.Command, StringComparison.InvariantCultureIgnoreCase));
+            var command = _commands.FirstOrDefault(c => c.Name.Equals(_arguments.Command, StringComparison.InvariantCultureIgnoreCase));
             if (command == null)
-                Console.WriteLine("Sorry. Unknown command {0}", arguments.Command);
+                _textWriter.WriteLine("Sorry. Unknown command {0}", _arguments.Command);
             else
                 command.Execute();
         }
