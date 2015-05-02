@@ -47,7 +47,7 @@ namespace FluentTask
                 var behavior = new Behavior();
                 while (!Console.KeyAvailable)
                 {
-                    action.Invoke(behavior);
+                    action(behavior);
                     behavior.Execute();
                     Thread.Sleep(500);
                 }
@@ -79,7 +79,7 @@ namespace FluentTask
         {
             foreach (var action in _actions)
             {
-                action.Invoke(this);
+                action(this);
             }
             _actions.Clear();
         }
